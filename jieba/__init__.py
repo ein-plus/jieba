@@ -7,13 +7,17 @@ import os
 import sys
 import time
 import logging
-import marshal
 import tempfile
 import threading
 from math import log
 from hashlib import md5
 from ._compat import *
 from . import finalseg
+
+if sys.version_info[0] >= 3:
+    import pickle as serializer
+else:
+    import marshal as serializer
 
 if os.name == 'nt':
     from shutil import move as _replace_file
@@ -131,7 +135,7 @@ class Tokenizer(object):
                     "Loading model from cache %s" % cache_file)
                 try:
                     with open(cache_file, 'rb') as cf:
-                        self.FREQ, self.total = marshal.load(cf)
+                        self.FREQ, self.total = serializer.load(cf)
                     load_from_cache_fail = False
                 except Exception:
                     load_from_cache_fail = True
@@ -147,7 +151,7 @@ class Tokenizer(object):
                         # prevent moving across different filesystems
                         fd, fpath = tempfile.mkstemp(dir=tmpdir)
                         with os.fdopen(fd, 'wb') as temp_cache_file:
-                            marshal.dump(
+                            serializer.dump(
                                 (self.FREQ, self.total), temp_cache_file)
                         _replace_file(fpath, cache_file)
                     except Exception:
